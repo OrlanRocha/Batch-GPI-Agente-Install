@@ -17,16 +17,31 @@ Este script realiza a implantacao automatizada do GLPI Agent em sistemas Windows
 | `VersaoSetup`              | Define a versao do GLPI Agent a ser instalada.                         |
 | `ipServidor`               | IP do servidor onde esta hospedado o instalador.                       |
 | `LocalSetup`               | URL base do instalador, gerada com base no IP e na versao.              |
-| `OpcoesInstalacao`         | Parametros adicionais passados ao `msiexec` para instalacao silenciosa.|
+| `OpcoesInstalacao`         | Parametros adicionais passados ao `msiexec` para instalacao silenciosa. Utiliza automaticamente o IP informado para `ipServidor`.|
 | `DesinstalarFusionInventory` | Se `Sim`, desinstala o FusionInventory Agent antes da instalacao.     |
 | `DesinstalarOcsAgent`      | Se `Sim`, desinstala o OCS Inventory Agent antes da instalacao.         |
 
 ## Como Usar
 
+### Script em Batch (`install_inventory_gso_agent.bat`)
+
 1. **Edite o script**, ajustando as variaveis `ipServidor` e `VersaoSetup` conforme necessario.
 2. **Execute como administrador** — o script verifica automaticamente e interrompe se nao tiver privilegios.
 3. **Aguarde o processo de download e instalacao**.
-4. **Verifique as mensagens de status** para confirmar o sucesso da instalacao ou falhas.
+4. **Verifique as mensagens de status** para confirmar o sucesso da instalacao ou falhas. Em caso de erro, o script retorna um codigo de saida diferente de `0`, permitindo acoes corretivas em ferramentas de automacao.
+
+### Script em PowerShell (`install_inventory_gso_agent.ps1`)
+
+1. **Ajuste as variaveis** `IpServidor` e `SetupVersion` no topo do arquivo conforme sua infraestrutura.
+2. Em um **PowerShell elevado (Executar como administrador)**, habilite a execucao de scripts se necessario:
+   ```powershell
+   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+   ```
+3. **Execute o script** apontando para o arquivo `.ps1`:
+   ```powershell
+   .\install_inventory_gso_agent.ps1
+   ```
+4. As mensagens de progresso e os codigos de saida funcionam como no script em batch, permitindo automacao e tratamento de falhas.
 
 ## Mensagens do Script
 
