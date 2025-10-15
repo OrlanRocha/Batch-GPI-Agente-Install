@@ -14,18 +14,22 @@ if %errorLevel% NEQ 0 (
 set "SetupVersion=1.7.3"
 set "SetupArchitecture=Auto"
 
-:: IP Servidor GLPI 
+:: IP Servidor GLPI
 :: Se o servidor GLPI estiver em outro IP, altere aqui
 set "ipServidor=127.0.0.1"
 
 :: Diretorio do Agente GLPI
 set "SetupLocation=http://%ipServidor%/glpi/agent/%SetupVersion%"
-set "SetupOptions=/quiet RUNNOW=1 SERVER='http://10.200.32.174/glpi/'"
+
+:: Opcoes passadas ao instalador MSI. Utiliza o mesmo IP configurado acima
+:: para evitar discrepancias e remove aspas simples invalidas para o msiexec.
+set "SetupOptions=/quiet RUNNOW=1 SERVER=http://%ipServidor%/glpi/"
 set "Reconfigure=Yes"
 set "Repair=Yes"
 set "Verbose=No"
 set "RunUninstallFusionInventoryAgent=Yes"
 set "UninstallOcsAgent=No"
+set "ExitCode=0"
 
 :: Detectar arquitetura automaticamente
 if /I "%SetupArchitecture%"=="Auto" (
@@ -42,7 +46,11 @@ set "TempFile=%TEMP%\%Setup%"
 
 :: Funcao de download com PowerShell
 echo Baixando agente GLPI...
-powershell -Command "Invoke-WebRequest '%SetupURL%' -OutFile '%TempFile%'"
+powershell -Command "Invoke-WebRequest '%SetupURL%' -OutFile '%TempFile%'" || goto :DownloadFailed
+
+if not exist "%TempFile%" (
+    goto :DownloadFailed
+)
 
 :: Desinstalar FusionInventory-Agent se necessario
 if /I "%RunUninstallFusionInventoryAgent%"=="Yes" (
@@ -72,6 +80,13 @@ if "%Repair%"=="Yes" (
 
 echo Instalando agente GLPI...
 msiexec %InstallCmd% "%TempFile%" %SetupOptions%
+if errorlevel 1 (
+    set "ExitCode=%errorlevel%"
+    echo Falha na instalacao com o codigo de erro %ExitCode%.
+    goto :Cleanup
+)
+
+echo Instalacao realizada com sucesso!
 
 :: Limpeza
 if exist "%TempFile%" (
@@ -80,3 +95,15 @@ if exist "%TempFile%" (
 
 echo Concluido.
 endlocal
+exit /b 0
+
+:DownloadFailed
+set "ExitCode=1"
+echo Falha ao baixar o instalador do GLPI Agent.
+
+:Cleanup
+if exist "%TempFile%" (
+    del /f /q "%TempFile%"
+)
+endlocal
+exit /b %ExitCode%
